@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: flask-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: registry.digitalocean.com/registry-acs/flask-app:latest
+        ports:
+        - containerPort: 5000
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
+          fsGroup: 2000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
