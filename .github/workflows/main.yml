@@ -1,0 +1,30 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      run: docker build -t flask-app .
+
+    - name: Log in to Docker registry
+      uses: docker/login-action@v1
+      with:
+        registry: registry.digitalocean.com
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Tag image
+      run: docker tag flask-app registry.digitalocean.com/registry-acs/flask-app:latest
+
+    - name: Push image to DO Container Registry
+      run: docker push registry.digitalocean.com/registry-acs/flask-app:latest
