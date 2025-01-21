@@ -1,5 +1,6 @@
 # flask-app Demo deployment
-
+This repo contain some configuration file for building a secure kubernete infrastructure on cloud. this is not completed deployment repo.
+you neet to change or add more configuration to deploy your application.
 ## Digitalocean kubernetes cluster setup
 
 ### Pre-reqs
