@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cis-cluster-hardening-config
+  namespace: kube-system
+data:
+  kube-apiserver.yaml: |
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    metadata:
+      name: kube-apiserver
+    spec:
+      authentication:
+        anonymous:
+          enabled: false
+        webhook:
+          enabled: true
+          cacheTTL: 2m
+          config:
+            url: https://webhook-service.default.svc
+            caBundle: <webhook-service-ca-bundle>
+      authorization:
+        mode: Webhook
+      auditPolicy:
+        logDir: /var/log/kubernetes/audit
+        logMaxAge: 30
+        logMaxBackup: 10
+        logMaxSize: 100
+      tlsCipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_RSA_WITH_AES_256_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
+        - TLS_RSA_WITH_AES_128_CBC_SHA
+        - TLS_RSA_WITH_AES_256_CBC_SHA
+        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+        - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+        - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+        - TLS_RSA_WITH_3DES_EDE_CBC_SHA
+        - TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
+        - TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
+      enableProfiling: false
+      enableContentionProfiling: false
+      enableDebuggingHandlers: false
+      readOnlyPort: 0
+      healthzPort: 0
+      eventRecordQPS: 5
+      enableAggregatorRouting: false
+      enableDynamicProvisioningScheduling: false
+      enableNonPreemptingPriority: false
+      enableProfilingHandlers: false
+      enableCustomMetrics: false
+      enableVerticalPodAutoscaling: false
+      enablePodOverhead: false
+      enablePodPidsLimit: true
+      enablePodCgroupCleanup: false
+      enablePodOverheadTracking: false
+      enablePodOverheadTrackingTerminationGracePeriodSeconds: 0
+
+  kubelet.yaml: |
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    metadata:
+      name: kubelet
+    spec:
+      anonymous:
+        enabled: false
+      authorization:
+        mode: Webhook
+      authentication:
+        x509:
+          clientCAFile: /etc/kubernetes/pki/ca.crt
+      readOnlyPort: 0
+      streamingConnectionIdleTimeout: "4h"
+      makeIPTablesUtilChains: true
+      hostnameOverride: ""
+      rotateCertificates: true
+      RotateKubeletServerCertificate: true
+      tlsCertFile: /var/lib/kubelet/pki/kubelet.crt
+      tlsPrivateKeyFile: /var/lib/kubelet/pki/kubelet.key
+      tlsCipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_RSA_WITH_AES_256_GCM_SHA384
+      podPidsLimit: 100
+
+  kube-proxy.yaml: |
+    apiVersion: kubeproxy.config.k8s.io/v1alpha1
+    kind: KubeProxyConfiguration
+    metadata:
+      name: kube-proxy
+    spec:
+      metricsBindAddress: "127.0.0.1:10249"
+
+  kubernetes-rbac.yaml: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: cis-clusterrole
+    rules:
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["create", "list", "get"]
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      resources: ["roles", "rolebindings"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["persistentvolumes"]
+      verbs: ["create", "list", "get"]
+    - apiGroups: ["certificates.k8s.io"]
+      resources: ["certificatesigningrequests"]
+      verbs: ["create", "get", "list", "watch"]
+    - apiGroups: ["admissionregistration.k8s.io"]
+      resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
+      verbs: ["create", "get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "daemonsets"]
+      verbs: ["get", "list", "watch", "create", "update"]
+    - apiGroups: ["networking.k8s.io"]
+      resources: ["networkpolicies"]
+      verbs: ["get", "list", "watch", "create", "update"]
+
+  pod-security-policy.yaml: |
+    apiVersion: policy/v1beta1
+    kind: PodSecurityPolicy
+    metadata:
+      name: restricted-psp
+    spec:
+      privileged: false
+      allowPrivilegeEscalation: false
+      allowedCapabilities: []
+      volumes:
+        - "configMap"
+        - "emptyDir"
+        - "secret"
+      hostNetwork: false
+      hostIPC: false
+      hostPID: false
+      runAsUser:
+        rule: "MustRunAsNonRoot"
+      seLinux:
+        rule: "RunAsAny"
+      supplementalGroups:
+        rule: "MustRunAs"
+        ranges:
+          - min: 1
+            max: 65535
+      fsGroup:
+        rule: "MustRunAs"
+        ranges:
+          - min: 1
+            max: 65535
+      readOnlyRootFilesystem: true

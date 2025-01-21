@@ -1,0 +1,22 @@
+controller:
+  replicaCount: 2  # Increase for high availability
+  resources:
+    requests:
+      cpu: 200m  # Adjust based on load
+      memory: 256Mi  # Adjust based on load
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
+      service.beta.kubernetes.io/do-loadbalancer-tls-passthrough: "true"
+      service.beta.kubernetes.io/do-loadbalancer-hostname: "your-domain-here"
+  config:
+    use-proxy-protocol: "true"
+    keep-alive-requests: "10000"
+    upstream-keepalive-requests: "1000"
+    worker-processes: "auto"
+    max-worker-connections: "65535"
+    use-gzip: "true"
