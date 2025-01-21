@@ -39,37 +39,6 @@
   kubectl apply -f cert-issuer.yml
   ```
 
-### Install private container registry using digital ocean spaces as storage
-
-- create 2 hostname DNS CNAME records for registry to point to your loadbalancer domain: 
-    - registry -> lb.example.com
-    - www.registry -> lb.example.com
-- set actual registry hostname in `docker-registry-values.yml` e.g. registry.example.com
-- create spaces bucket in digital ocean
-- set `s3.region`, `s3.regionEndpoint` & `s3.bucket` in `docker-registry-values.yml`
-- create access & secret key for bucket
-- set `secrets.s3.accessKey` & `secrets.s3.secretKey` in `docker-registry-values.yml`
-- create registry username & password using: 
-  ```
-  docker run --rm -ti xmartlabs/htpasswd username password >> htpasswd_file
-  ```
-- replace `username:password` under `secrets.htpasswd` with contents of `htpasswd_file` in `docker-registry-values.yml`
-- create container registry:
-  ```
-  helm repo add twuni https://helm.twun.io
-  ```
-  ```
-  helm repo update twuni
-  ```
-  ```
-  helm install docker-registry twuni/docker-registry -f docker-registry-values.yml --create-namespace --namespace docker-registry
-  ```
-
-- TODO Later: create registry auth secret in namespace where container images will be used:
-  ```
-  kubectl create secret docker-registry regcred --docker-server=registry1.chivangoy.tech --docker-username=chiva --docker-password=password1 -n my-app-namespace
-  ```
-
 ### Install argocd for continuous deployment
 
 - create 2 hostname DNS CNAME records for argocd to point to your loadbalancer domain: 
